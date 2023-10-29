@@ -1,0 +1,140 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from sklearn.model_selection import train_test_split
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("ytb_comments.csv")
+
+# Initialize the SentimentIntensityAnalyzer
+sentiments = SentimentIntensityAnalyzer()
+
+# Calculate sentiment scores and store them in the DataFrame
+df["Positive"] = [sentiments.polarity_scores(i)["pos"] for i in df["text"]]
+df["Negative"] = [sentiments.polarity_scores(i)["neg"] for i in df["text"]]
+df["Neutral"] = [sentiments.polarity_scores(i)["neu"] for i in df["text"]]
+df["Compound"] = [sentiments.polarity_scores(i)["compound"] for i in df["text"]]
+
+# Create a list to store the sentiment labels based on the Compound score
+sentiment = []
+for i in df["Compound"]:
+    if i >= 0.05:
+        sentiment.append("Positive")
+    elif i <= -0.05:
+        sentiment.append("Negative")
+    else:
+        sentiment.append("Neutral")
+
+# Make sure the "sentiment" list has the same length as the DataFrame
+if len(sentiment) == len(df):
+    df["Sentiment"] = sentiment
+else:
+    print("Length of 'sentiment' list does not match the length of the DataFrame.")
+
+# Split the data into training and testing sets
+X = df["text"]
+y = df["Sentiment"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Convert text data into numerical features using TF-IDF
+tfidf_vectorizer = TfidfVectorizer(max_features=1000)  # You can adjust the number of features as needed
+X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+
+# Apply K-means clustering
+num_clusters = 3  # You can adjust the number of clusters
+kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+y_train_clusters = kmeans.fit_predict(X_train_tfidf)
+
+# Reduce dimensionality using PCA to visualize clusters
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_tfidf.toarray())
+
+# Create a scatter plot to visualize clusters
+colors = ['red', 'green', 'blue']
+
+for i in range(num_clusters):
+    cluster_points = X_train_pca[y_train_clusters == i]
+    plt.scatter(cluster_points[:, 0], cluster_points[:, 1], c=colors[i], label=f'Cluster {i}')
+
+plt.xlabel('PCA Dimension 1')
+plt.ylabel('PCA Dimension 2')
+plt.title('Clusters of Sentiments (PCA Visualization)')
+plt.legend()
+plt.show()
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from sklearn.model_selection import train_test_split
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("ytb_comments.csv")
+
+# Initialize the SentimentIntensityAnalyzer
+sentiments = SentimentIntensityAnalyzer()
+
+# Calculate sentiment scores and store them in the DataFrame
+df["Positive"] = [sentiments.polarity_scores(i)["pos"] for i in df["text"]]
+df["Negative"] = [sentiments.polarity_scores(i)["neg"] for i in df["text"]]
+df["Neutral"] = [sentiments.polarity_scores(i)["neu"] for i in df["text"]]
+df["Compound"] = [sentiments.polarity_scores(i)["compound"] for i in df["text"]]
+
+# Create a list to store the sentiment labels based on the Compound score
+sentiment = []
+for i in df["Compound"]:
+    if i >= 0.05:
+        sentiment.append("Positive")
+    elif i <= -0.05:
+        sentiment.append("Negative")
+    else:
+        sentiment.append("Neutral")
+
+# Make sure the "sentiment" list has the same length as the DataFrame
+if len(sentiment) == len(df):
+    df["Sentiment"] = sentiment
+else:
+    print("Length of 'sentiment' list does not match the length of the DataFrame.")
+
+# Split the data into training and testing sets
+X = df["text"]
+y = df["Sentiment"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Convert text data into numerical features using TF-IDF
+tfidf_vectorizer = TfidfVectorizer(max_features=1000)  # You can adjust the number of features as needed
+X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+
+# Apply K-means clustering
+num_clusters = 3  # You can adjust the number of clusters
+kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+y_train_clusters = kmeans.fit_predict(X_train_tfidf)
+
+# Get the cluster centers
+cluster_centers = kmeans.cluster_centers_
+
+# Reduce dimensionality using PCA to visualize clusters
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_tfidf.toarray())
+
+# Create a scatter plot to visualize clusters
+colors = ['red', 'green', 'blue']
+
+for i in range(num_clusters):
+    cluster_points = X_train_pca[y_train_clusters == i]
+    plt.scatter(cluster_points[:, 0], cluster_points[:, 1], c=colors[i], label=f'Cluster {i}')
+
+# Plot cluster centers
+plt.scatter(cluster_centers[:, 0], cluster_centers[:, 1], c='black', marker='x', s=250, label='Centroids')
+
+plt.xlabel('PCA Dimension 1')
+plt.ylabel('PCA Dimension 2')
+plt.title('Clusters of Sentiments (PCA Visualization)')
+plt.legend()
+plt.show()
